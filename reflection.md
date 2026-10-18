@@ -9,17 +9,26 @@
 2. **Schedule a care task** — The owner adds a task (like a walk, feeding, or medication) for a specific pet with a time, duration, priority, and how often it repeats (once, daily, weekly).
 3. **View today's plan** — The owner sees all of today's tasks across every pet, sorted by time, with warnings if two tasks clash.
 
-- Briefly describe your initial UML design.
+- **Briefly describe your initial UML design.**
+  My UML has four classes. An Owner has many Pets (aggregation), each Pet has many Tasks (composition), and a Scheduler uses the Owner to work with tasks across all pets. I added "1" and "*" multiplicity so the one-to-many relationships are explicit.
 
-
-- What classes did you include, and what responsibilities did you assign to each?
+- **What classes did you include, and what responsibilities did you assign to each?**
+  - **Task** — one care activity: description, time (HH:MM), duration, priority, frequency (once/daily/weekly), due date, completion status, and which pet it belongs to. It can mark itself complete and create its next occurrence.
+  - **Pet** — a pet's name and species plus its list of tasks, with methods to add, remove, and list them.
+  - **Owner** — the owner's name and list of pets. `get_all_tasks()` gathers every pet's tasks into one list.
+  - **Scheduler** — the "brain." It reads tasks through `Owner.get_all_tasks()` (never from a single pet), then sorts, filters, handles recurring tasks, and detects conflicts.
 
 
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+- **Did your design change during implementation?**
+  Yes. Claude generated my first UML, but it left return types off five Scheduler methods and used text labels instead of multiplicity. I added the return types and "1"/"*" multiplicity myself.
+
+- **If yes, describe at least one change and why you made it.**
+After generating the skeleton, I asked Claude to review it against the UML. I accepted 7 of its 9 points and rejected 2:
+  - **Accepted:** Made `get_pet`, `next_occurrence`, and `mark_task_complete` return `X | None`, because a missing pet or a one-time task has nothing to return, and the old hints promised a value that might not exist. Changed Task to `@dataclass(eq=False)` so `remove_task` removes the exact task object, not just the first one with identical fields. Added an optional `today` parameter to `get_todays_tasks()` so tests can use a fixed date. Decided `Pet.add_task()` will set `task.pet_name` automatically so it can't drift, and that times will be sorted as minutes rather than strings, since "9:00" sorts after "10:00" as text.
+  - **Rejected:** Storing a Pet object reference on each Task. It creates a circular reference that complicates printing, comparison, and JSON saving, and the pet_name string is enough. Also rejected Enums for priority and frequency: the UI dropdowns already limit the values, and Enums would add complexity without much benefit at this size.
 
 ---
 

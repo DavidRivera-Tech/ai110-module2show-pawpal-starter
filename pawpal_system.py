@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 
-@dataclass
+@dataclass(eq=False)
 class Task:
     description: str
     time: str
@@ -18,7 +18,7 @@ class Task:
     def mark_complete(self) -> None:
         pass
 
-    def next_occurrence(self) -> Task:
+    def next_occurrence(self) -> Task | None:
         pass
 
 
@@ -46,7 +46,7 @@ class Owner:
     def add_pet(self, pet: Pet) -> None:
         pass
 
-    def get_pet(self, name: str) -> Pet:
+    def get_pet(self, name: str) -> Pet | None:
         pass
 
     def get_all_tasks(self) -> list[Task]:
@@ -57,7 +57,7 @@ class Scheduler:
     def __init__(self, owner: Owner) -> None:
         self.owner = owner
 
-    def get_todays_tasks(self) -> list[Task]:
+    def get_todays_tasks(self, today: date | None = None) -> list[Task]:
         pass
 
     def sort_by_time(self, tasks: list[Task]) -> list[Task]:
@@ -69,7 +69,7 @@ class Scheduler:
     def filter_by_status(self, tasks: list[Task], completed: bool) -> list[Task]:
         pass
 
-    def mark_task_complete(self, task: Task) -> Task:
+    def mark_task_complete(self, task: Task) -> Task | None:
         pass
 
     def detect_conflicts(self, tasks: list[Task]) -> list[str]:

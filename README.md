@@ -90,19 +90,51 @@ Filter: Pending tasks today
 
 ## 🧪 Testing PawPal+
 
+### Run the demo
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python main.py
 ```
 
-Sample test output:
+### Run the tests
+```bash
+python -m pytest -v
+```
 
+### What the tests cover (14 tests in `tests/test_pawpal.py`)
+
+| Area | Tests |
+| ---- | ----- |
+| **Core classes** | Marking a task complete changes its status; adding a task to a pet increases its count and stamps the pet's name. |
+| **Sorting** | Out-of-order tasks come back earliest first. A task entered as "9:00" is normalized and sorts before "10:00" (proves the sort is numeric, not text). The input list isn't changed. |
+| **Recurrence** | Daily tasks recur +1 day and weekly +7 days; "once" tasks don't recur; completing twice creates only one follow-up; dates roll over correctly at month end, year end, and leap day (2028-02-29). |
+| **Conflict detection** | Overlapping tasks across two pets produce one warning naming both; back-to-back tasks don't conflict; same-start and nested tasks do; completed tasks and other-day tasks are ignored. |
+| **Filtering** | Pet filter ignores case and spaces and returns `[]` for an unknown pet; status filter separates done from pending. |
+| **Validation and edge cases** | Invalid times ("25:00", "12:60", "0730", "") and zero-minute durations are rejected; a pet with no tasks gives an empty schedule and no conflicts; the Scheduler gathers tasks from all pets. |
+
+All tests use a fixed date (`2026-10-18`) instead of "today", so they give the same result whenever they run.
+
+### Sample test output
 ```
-# Paste your pytest output here
+tests/test_pawpal.py::test_mark_complete_changes_status PASSED                     [  7%]
+tests/test_pawpal.py::test_add_task_increases_pet_task_count PASSED                [ 14%]
+tests/test_pawpal.py::test_sort_by_time_chronological_order PASSED                 [ 21%]
+tests/test_pawpal.py::test_daily_task_completion_creates_next_day_task PASSED      [ 28%]
+tests/test_pawpal.py::test_weekly_recurrence_and_once_returns_none PASSED          [ 35%]
+tests/test_pawpal.py::test_double_complete_does_not_duplicate_recurrence PASSED    [ 42%]
+tests/test_pawpal.py::test_recurrence_across_month_and_year_boundary PASSED        [ 50%]
+tests/test_pawpal.py::test_detect_conflicts_flags_overlapping_tasks PASSED         [ 57%]
+tests/test_pawpal.py::test_detect_conflicts_boundaries PASSED                      [ 64%]
+tests/test_pawpal.py::test_detect_conflicts_ignores_completed_and_other_dates PASSED [ 71%]
+tests/test_pawpal.py::test_filter_by_pet_and_status PASSED                         [ 78%]
+tests/test_pawpal.py::test_invalid_time_rejected_and_normalized PASSED             [ 85%]
+tests/test_pawpal.py::test_pet_with_no_tasks PASSED                                [ 92%]
+tests/test_pawpal.py::test_scheduler_gets_tasks_from_all_pets PASSED               [100%]
+
+============================== 14 passed in 0.07s ==============================
 ```
+
+### Confidence Level: ⭐⭐⭐⭐☆ (4/5)
+Every scheduling algorithm is tested on both normal and edge cases, and all 14 tests pass. It's not 5/5 because the Streamlit UI has no automated tests, and tasks that run past midnight aren't handled (a documented tradeoff).
 
 ## 📐 Smarter Scheduling
 

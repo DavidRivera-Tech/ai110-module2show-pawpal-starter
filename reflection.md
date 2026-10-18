@@ -80,13 +80,19 @@ After generating the skeleton, I asked Claude to review it against the UML. I ac
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+- **What behaviors did you test?**
+  14 tests covering: task completion and adding tasks to pets; sorting (including a "9:00" vs "10:00" case that a text sort would get wrong); daily and weekly recurrence, "once" tasks not recurring, the double-completion guard, and date rollover at month end, year end, and leap day; conflict detection for overlaps, back-to-back tasks, identical starts, nested tasks, completed tasks, and tasks on other days; case-insensitive pet filtering and status filtering; time and duration validation; a pet with no tasks; and gathering tasks across all pets.
+
+- **Why were these tests important?**
+  They target where bugs were most likely: off-by-one errors at conflict boundaries, duplicate recurring tasks, and string-vs-number sorting. Claude's first sort test used "09:00" vs "10:00", which would pass even with a broken text sort. I changed it to "9:00" so the test actually proves the sort is numeric. I also caught that the empty-pet test was checking a hand-typed `[]` instead of what the Scheduler returned, and fixed it. All tests use a fixed date so they don't break depending on what day they run.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+- **How confident are you that your scheduler works correctly?**
+  4 out of 5. Every algorithm has passing tests for both normal and edge cases, and the `main.py` demo shows them working across two pets. I'm not at 5 because the Streamlit UI isn't covered by automated tests.
+
+- **What edge cases would you test next if you had more time?**
+  Tasks that run past midnight (e.g., 23:50 for 30 minutes), which my scheduler currently doesn't handle. Completing a recurring task whose pet was removed (the follow-up is silently not created). And UI-level behavior: the backend now treats "luna" and "Luna" as the same pet, but there's no automated test that the Streamlit form actually shows the duplicate warning.
 
 ---
 

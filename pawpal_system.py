@@ -31,6 +31,8 @@ class Task:
 
     def __post_init__(self) -> None:
         """Validate and normalize time to HH:MM and lowercase priority and frequency."""
+        if self.duration_minutes < 1:
+            raise ValueError(f"duration_minutes must be at least 1, got {self.duration_minutes}")
         minutes = time_to_minutes(self.time)
         self.time = f"{minutes // 60:02d}:{minutes % 60:02d}"
         self.priority = self.priority.strip().lower()

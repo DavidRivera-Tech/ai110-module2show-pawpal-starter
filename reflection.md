@@ -4,8 +4,17 @@
 
 **a. Initial design**
 
+**Core user actions:**
+1. **Add a pet** — The owner enters a pet's name and species so PawPal+ can track care for each of their pets separately.
+2. **Schedule a care task** — The owner adds a task (like a walk, feeding, or medication) for a specific pet with a time, duration, priority, and how often it repeats (once, daily, weekly).
+3. **View today's plan** — The owner sees all of today's tasks across every pet, sorted by time, with warnings if two tasks clash.
+
 - Briefly describe your initial UML design.
+
+
 - What classes did you include, and what responsibilities did you assign to each?
+
+
 
 **b. Design changes**
 

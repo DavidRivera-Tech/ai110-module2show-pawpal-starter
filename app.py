@@ -128,11 +128,13 @@ st.divider()
 st.subheader("Today's Schedule")
 today_tasks = scheduler.get_todays_tasks()
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
     pet_filter = st.selectbox("Filter by pet", ["All pets"] + [p.name for p in owner.pets])
 with col2:
     status_filter = st.selectbox("Filter by status", ["All", "Pending", "Done"])
+with col3:
+    sort_choice = st.selectbox("Sort by", ["Time", "Priority, then time"])
 
 filtered = today_tasks
 if pet_filter != "All pets":
@@ -143,7 +145,11 @@ elif status_filter == "Done":
     filtered = scheduler.filter_by_status(filtered, True)
 
 if filtered:
-    st.table(task_rows(scheduler.sort_by_time(filtered)))
+    if sort_choice == "Priority, then time":
+        ordered = scheduler.sort_by_priority(filtered)
+    else:
+        ordered = scheduler.sort_by_time(filtered)
+    st.table(task_rows(ordered))
 else:
     st.info("No tasks to show for today.")
 

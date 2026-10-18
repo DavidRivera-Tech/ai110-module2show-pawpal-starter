@@ -207,3 +207,18 @@ def test_scheduler_gets_tasks_from_all_pets():
 
     assert len(tasks) == 2
     assert {t.pet_name for t in tasks} == {"Mochi", "Whiskers"}
+
+
+def test_sort_by_priority_then_time():
+    """sort_by_priority orders high before medium before low, earliest first within a priority, without mutating input."""
+    _, _, _, scheduler = make_owner()
+    low = Task("Play", "07:00", priority="low", due_date=D)
+    high_late = Task("Pill", "12:00", priority="high", due_date=D)
+    medium = Task("Brush", "09:00", priority="medium", due_date=D)
+    high_early = Task("Walk", "08:00", priority="high", due_date=D)
+    tasks = [low, high_late, medium, high_early]
+
+    result = scheduler.sort_by_priority(tasks)
+
+    assert result == [high_early, high_late, medium, low]
+    assert tasks == [low, high_late, medium, high_early]

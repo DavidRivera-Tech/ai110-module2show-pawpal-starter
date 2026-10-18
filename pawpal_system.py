@@ -4,6 +4,8 @@ from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from itertools import combinations
 
+PRIORITY_RANK = {"high": 0, "medium": 1, "low": 2}
+
 
 def time_to_minutes(hhmm: str) -> int:
     """Parse an "HH:MM" string and return minutes since midnight, raising ValueError if invalid."""
@@ -117,6 +119,12 @@ class Scheduler:
     def sort_by_time(self, tasks: list[Task]) -> list[Task]:
         """Return a new list of tasks sorted by time (HH:MM), earliest first."""
         return sorted(tasks, key=lambda t: time_to_minutes(t.time))
+
+    def sort_by_priority(self, tasks: list[Task]) -> list[Task]:
+        """Return a new list sorted high priority first, then by earliest time within each priority."""
+        return sorted(
+            tasks, key=lambda t: (PRIORITY_RANK.get(t.priority, 3), time_to_minutes(t.time))
+        )
 
     def filter_by_pet(self, tasks: list[Task], pet_name: str) -> list[Task]:
         """Return only the tasks belonging to the named pet, ignoring case and surrounding spaces."""

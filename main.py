@@ -30,6 +30,7 @@ def main() -> None:
     mochi.add_task(Task("Morning walk", "07:30", 30, "high", "daily"))
     luna.add_task(Task("Breakfast", "07:45", 10, "high", "daily"))
     luna.add_task(Task("Brush coat", "12:00", 5, "medium", "once"))
+    mochi.add_task(Task("Fetch in the yard", "06:45", 15, "low", "once"))
 
     scheduler = Scheduler(owner)
 
@@ -37,6 +38,11 @@ def main() -> None:
     print_tasks(
         "Today's Schedule (sorted by time)",
         scheduler.sort_by_time(scheduler.get_todays_tasks()),
+    )
+
+    print_tasks(
+        "Today's Schedule (by priority, then time)",
+        scheduler.sort_by_priority(scheduler.get_todays_tasks()),
     )
 
     # 2. Filtering by pet (lowercase name shows case-insensitive matching)

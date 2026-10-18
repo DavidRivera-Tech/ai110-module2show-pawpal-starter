@@ -50,13 +50,19 @@ After generating the skeleton, I asked Claude to review it against the UML. I ac
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+- **How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?**
+  I used Claude in VS Code for design brainstorming (generating the Mermaid UML from my class list), scaffolding (turning the UML into dataclass skeletons), design review (asking it to critique the skeleton against the UML), and implementation (filling in the core methods and the main.py demo).
+
+- **What kinds of prompts or questions were most helpful?**
+  Specific, constrained prompts worked best: listing exact attributes and methods, saying "do not edit any other file," and asking for a review with "do NOT edit, just give feedback" so I could decide what to accept instead of having changes applied automatically.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+- **Describe one moment where you did not accept an AI suggestion as-is.**
+  Claude's design review suggested storing a Pet object reference on each Task. I rejected it because it creates a circular reference that complicates printing, comparison, and JSON saving, and a pet_name string set automatically by `Pet.add_task()` is enough. Also, when the em dash in my output showed up garbled, Claude suggested `set PYTHONIOENCODING=utf-8`, which is Command Prompt syntax and wouldn't work in my PowerShell terminal. I replaced the em dash with a plain hyphen instead, so the output works on any machine.
+
+- **How did you evaluate or verify what the AI suggested?**
+  Claude often reported that it hadn't run its own code, so I verified everything myself: I rendered the UML in Mermaid Live to confirm it drew correctly, ran an import check after every change to `pawpal_system.py`, ran `main.py` to confirm the output, and wrote pytest tests, including one that confirms `add_task()` sets `pet_name`.
 
 ---
 

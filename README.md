@@ -22,6 +22,17 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## 🏗️ Implementation Summary
+
+PawPal+ keeps its backend logic in `pawpal_system.py`, using four classes:
+
+- **`Task`** (dataclass): one care activity, with a description, time (HH:MM), duration, priority, frequency (once/daily/weekly), due date, completion status, and pet name. `mark_complete()` marks it done.
+- **`Pet`** (dataclass): a pet's name, species, and list of tasks. `add_task()` also stamps the task with the pet's name, so every task knows which pet it belongs to.
+- **`Owner`**: the owner's name and list of pets. `get_all_tasks()` combines every pet's tasks into one list.
+- **`Scheduler`**: the "brain." It reads tasks **only** through `Owner.get_all_tasks()`, so every feature works across all pets, not just one. `get_todays_tasks()` returns everything due today.
+
+**How they work together:** `main.py` creates an Owner, adds Pets, and adds Tasks to each Pet. The Scheduler asks the Owner for all tasks and returns today's plan.
+
 ## Getting started
 
 ### Setup
@@ -44,14 +55,15 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
+Running `python main.py` creates an owner with two pets and four tasks, then prints today's schedule through the Scheduler:
 
 ```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
+Today's Schedule - 2026-10-17
+=============================
+07:30 | Mochi | Morning walk         |  30 min | high   | daily  | [ ] pending
+12:00 | Mochi | Give heartworm pill  |   5 min | high   | once   | [ ] pending
+08:00 | Luna  | Breakfast            |  10 min | high   | daily  | [ ] pending
+18:00 | Luna  | Play session         |  20 min | low    | weekly | [ ] pending
 ```
 
 ## 🧪 Testing PawPal+

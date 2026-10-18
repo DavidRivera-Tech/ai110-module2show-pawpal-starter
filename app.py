@@ -1,10 +1,15 @@
+import json
+
 import streamlit as st
 
 from pawpal_system import Owner, Pet, Scheduler, Task, time_to_minutes
 
+DATA_FILE = "data.json"
+
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
 st.title("🐾 PawPal+")
+st.caption("Your pets and tasks are saved automatically to data.json.")
 
 st.markdown(
     """
@@ -34,13 +39,21 @@ with st.expander("How it works", expanded=False):
 st.divider()
 
 if "owner" not in st.session_state:
-    st.session_state.owner = Owner(name="Jordan")
+    try:
+        loaded_owner = Owner.load_from_json(DATA_FILE)
+    except (json.JSONDecodeError, KeyError, ValueError, TypeError):
+        loaded_owner = None
+        st.warning("Couldn't read data.json — starting with a fresh schedule.")
+    st.session_state.owner = loaded_owner or Owner(name="Jordan")
 
 owner = st.session_state.owner
 scheduler = Scheduler(owner)
 
 st.subheader("Owner")
-owner.name = st.text_input("Owner name", value=owner.name)
+new_name = st.text_input("Owner name", value=owner.name)
+if new_name != owner.name:
+    owner.name = new_name
+    owner.save_to_json(DATA_FILE)
 
 st.divider()
 
@@ -58,6 +71,7 @@ if st.button("Add pet"):
         st.warning(f"A pet named {pet_name.strip()} already exists.")
     else:
         owner.add_pet(Pet(pet_name.strip(), species))
+        owner.save_to_json(DATA_FILE)
         st.success(f"Added {pet_name.strip()} the {species}.")
 
 if owner.pets:
@@ -97,6 +111,7 @@ else:
                     frequency=frequency,
                 )
             )
+            owner.save_to_json(DATA_FILE)
             st.success(f"Added '{task_title}' for {pet.name}.")
 
 
@@ -191,6 +206,7 @@ else:
     )
     if st.button("Mark complete"):
         nxt = scheduler.mark_task_complete(pending[choice])
+        owner.save_to_json(DATA_FILE)
         if nxt is not None:
             st.session_state.flash = f"Done! Next '{nxt.description}' scheduled for {nxt.due_date}."
         else:

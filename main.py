@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 from pawpal_system import Owner, Pet, Scheduler, Task
 
 
@@ -92,6 +95,19 @@ def main() -> None:
         scheduler.sort_by_time(
             scheduler.filter_by_status(scheduler.get_todays_tasks(), False)
         ),
+    )
+
+    # 7. Persistence
+    title = "Persistence Demo"
+    print(title)
+    print("=" * len(title))
+    path = os.path.join(tempfile.gettempdir(), "pawpal_demo.json")
+    owner.save_to_json(path)
+    loaded = Owner.load_from_json(path)
+    os.remove(path)
+    print(
+        f"Saved and reloaded {loaded.name}: {len(loaded.pets)} pets, "
+        f"{len(loaded.get_all_tasks())} tasks"
     )
 
 

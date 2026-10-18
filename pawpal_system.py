@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from itertools import combinations
@@ -54,6 +56,33 @@ class Task:
             return None
         return replace(self, due_date=self.due_date + timedelta(days=days), completed=False)
 
+    def to_dict(self) -> dict:
+        """Return a JSON-serializable dict of this task, with due_date as an ISO string."""
+        return {
+            "description": self.description,
+            "time": self.time,
+            "duration_minutes": self.duration_minutes,
+            "priority": self.priority,
+            "frequency": self.frequency,
+            "due_date": self.due_date.isoformat(),
+            "completed": self.completed,
+            "pet_name": self.pet_name,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Task:
+        """Build a task from a dict produced by to_dict."""
+        return cls(
+            description=data["description"],
+            time=data["time"],
+            duration_minutes=data["duration_minutes"],
+            priority=data["priority"],
+            frequency=data["frequency"],
+            due_date=date.fromisoformat(data["due_date"]),
+            completed=data["completed"],
+            pet_name=data.get("pet_name", ""),
+        )
+
 
 @dataclass
 class Pet:
@@ -79,6 +108,22 @@ class Pet:
         """Return a copy of this pet's task list."""
         return list(self.tasks)
 
+    def to_dict(self) -> dict:
+        """Return a JSON-serializable dict of this pet and its tasks."""
+        return {
+            "name": self.name,
+            "species": self.species,
+            "tasks": [t.to_dict() for t in self.tasks],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Pet:
+        """Build a pet and its tasks from a dict produced by to_dict."""
+        pet = cls(name=data["name"], species=data["species"])
+        for task_data in data.get("tasks", []):
+            pet.add_task(Task.from_dict(task_data))
+        return pet
+
 
 @dataclass
 class Owner:
@@ -92,7 +137,7 @@ class Owner:
         self.pets.append(pet)
 
     def get_pet(self, name: str) -> Pet | None:
-        """Return the pet with the given name, or None if there is no match."""
+        """Return the pet whose name matches (case-insensitive), or None if there is no match."""
         for pet in self.pets:
             if pet.name.strip().casefold() == name.strip().casefold():
                 return pet
@@ -101,6 +146,31 @@ class Owner:
     def get_all_tasks(self) -> list[Task]:
         """Return a single combined list of every task across all pets."""
         return [task for pet in self.pets for task in pet.tasks]
+
+    def to_dict(self) -> dict:
+        """Return a JSON-serializable dict of this owner and all pets."""
+        return {"name": self.name, "pets": [p.to_dict() for p in self.pets]}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Owner:
+        """Build an owner with pets and tasks from a dict produced by to_dict."""
+        owner = cls(name=data["name"])
+        for pet_data in data.get("pets", []):
+            owner.add_pet(Pet.from_dict(pet_data))
+        return owner
+
+    def save_to_json(self, path: str = "data.json") -> None:
+        """Write this owner's data to a JSON file at the given path."""
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self.to_dict(), f, indent=2)
+
+    @classmethod
+    def load_from_json(cls, path: str = "data.json") -> Owner | None:
+        """Load an owner from a JSON file, returning None if the file does not exist."""
+        if not os.path.exists(path):
+            return None
+        with open(path, encoding="utf-8") as f:
+            return cls.from_dict(json.load(f))
 
 
 class Scheduler:

@@ -278,3 +278,29 @@ def test_next_slot_zero_duration_raises():
 
     with pytest.raises(ValueError):
         scheduler.find_next_available_slot(0, day=D)
+
+
+def test_save_and_load_round_trip(tmp_path):
+    """Saving then loading preserves the owner, pets, and every task field."""
+    owner, mochi, whiskers, _ = make_owner()
+    mochi.add_task(Task("Walk", "07:30", 30, "high", "daily", due_date=D))
+    mochi.add_task(Task("Pill", "12:00", 5, "medium", "once", due_date=date(2026, 11, 2), completed=True))
+    whiskers.add_task(Task("Play", "18:45", 20, "low", "weekly", due_date=date(2027, 1, 1)))
+    path = str(tmp_path / "data.json")
+
+    owner.save_to_json(path)
+    loaded = Owner.load_from_json(path)
+
+    assert loaded.name == owner.name
+    assert [(p.name, p.species) for p in loaded.pets] == [(p.name, p.species) for p in owner.pets]
+    fields = ("description", "time", "duration_minutes", "priority", "frequency", "due_date", "completed", "pet_name")
+    for original_pet, loaded_pet in zip(owner.pets, loaded.pets):
+        assert len(loaded_pet.tasks) == len(original_pet.tasks)
+        for a, b in zip(original_pet.tasks, loaded_pet.tasks):
+            for name in fields:
+                assert getattr(b, name) == getattr(a, name), name
+
+
+def test_load_missing_file_returns_none(tmp_path):
+    """Loading from a path that does not exist returns None."""
+    assert Owner.load_from_json(str(tmp_path / "nope.json")) is None

@@ -150,6 +150,27 @@ Every scheduling algorithm is tested on both normal and edge cases, and all 14 t
 
 All Scheduler features read tasks through `Owner.get_all_tasks()`, so they work across every pet, not just one.
 
+## 💾 Data Persistence
+
+PawPal+ remembers your pets and tasks between runs by saving them to `data.json`.
+
+**How it works:**
+1. When the Streamlit app starts, it calls `Owner.load_from_json("data.json")`. If the file exists, your owner, pets, and tasks are restored. If it doesn't exist (first run), the app starts fresh.
+2. Every change is saved immediately with `Owner.save_to_json("data.json")`: adding a pet, adding a task, marking a task complete, or changing the owner name.
+3. Each class converts itself to and from a plain dictionary: `Task.to_dict()` / `Task.from_dict()`, `Pet.to_dict()` / `Pet.from_dict()`, `Owner.to_dict()` / `Owner.from_dict()`. Dates are stored as ISO strings (e.g., `"2026-10-18"`), since JSON has no date type.
+4. If `data.json` is corrupted, the app shows a warning and starts with a fresh schedule instead of crashing.
+
+I used custom dictionary conversion instead of a library like marshmallow. It's only a few lines, adds no dependencies, and works simply because each Task stores its pet as a `pet_name` string rather than a Pet object reference (a design decision from Phase 1).
+
+**Files modified:**
+| File | Change |
+| ---- | ------ |
+| `pawpal_system.py` | Added `to_dict` / `from_dict` on Task, Pet, and Owner, plus `Owner.save_to_json()` and `Owner.load_from_json()` |
+| `app.py` | Loads `data.json` on startup (with a corrupt-file fallback) and auto-saves after every change |
+| `main.py` | Added a "Persistence Demo" section that saves to a temp file, reloads it, and prints the counts |
+| `tests/test_pawpal.py` | Added a full save/load round-trip test and a missing-file test |
+| `.gitignore` | Added `data.json` so personal data isn't committed |
+
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:

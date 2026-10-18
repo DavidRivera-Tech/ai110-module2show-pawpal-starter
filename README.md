@@ -144,6 +144,7 @@ Every scheduling algorithm is tested on both normal and edge cases, and all 14 t
 | Priority scheduling | `Scheduler.sort_by_priority()` | Sorts high → medium → low, then by time within each priority. Unknown priorities go last. Separate from `sort_by_time()` so both views are available (UI "Sort by" dropdown). |
 | Filtering | `Scheduler.filter_by_pet()`, `Scheduler.filter_by_status()` | Filter by pet name (case-insensitive) or by completed/pending. Both return lists, so they can be chained. |
 | Conflict handling | `Scheduler.detect_conflicts()` | Flags pending, same-day tasks whose time ranges overlap (start + duration), across **all** pets. Back-to-back tasks are not conflicts. Returns warning strings, never crashes. |
+| Next available slot | `Scheduler.find_next_available_slot()` | Finds the earliest start time (07:00–22:00) where a task of a given length fits without overlapping any pending task from any pet. Back-to-back is allowed; returns `None` if the day is full. |
 | Recurring tasks | `Task.next_occurrence()`, `Scheduler.mark_task_complete()` | Completing a daily task creates the next one at due date + 1 day (weekly: + 7 days) using `timedelta`, and adds it to the same pet. Completing a task twice does not create duplicates. |
 | Time validation | `time_to_minutes()`, `Task.__post_init__()` | Normalizes "7:30" to "07:30" and rejects invalid times like "25:99" when a task is created. |
 

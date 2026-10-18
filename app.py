@@ -160,6 +160,20 @@ if conflicts:
 elif today_tasks:
     st.success("No scheduling conflicts today.")
 
+st.markdown("**Find a free slot**")
+slot_col1, slot_col2 = st.columns([1, 2])
+with slot_col1:
+    slot_minutes = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=30, step=5)
+with slot_col2:
+    st.write("")
+    find_slot = st.button("Find next free slot")
+if find_slot:
+    slot = scheduler.find_next_available_slot(int(slot_minutes))
+    if slot:
+        st.info(f"Next free {int(slot_minutes)}-min slot today: {slot}")
+    else:
+        st.warning(f"No free {int(slot_minutes)}-min slot left today.")
+
 st.divider()
 
 st.subheader("Mark a Task Complete")

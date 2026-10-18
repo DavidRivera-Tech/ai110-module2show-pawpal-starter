@@ -65,7 +65,16 @@ def main() -> None:
         print("No conflicts found.")
     print()
 
-    # 4. Recurring tasks
+    # 4. Next available slot
+    title = "Next Available Slot"
+    print(title)
+    print("=" * len(title))
+    for minutes in (20, 45):
+        slot = scheduler.find_next_available_slot(minutes)
+        print(f"Next free {minutes}-min slot: {slot or 'none today'}")
+    print()
+
+    # 5. Recurring tasks
     title = "Recurring Task Demo"
     print(title)
     print("=" * len(title))
@@ -77,7 +86,7 @@ def main() -> None:
         print(f"Completed 'Morning walk' -> next occurrence scheduled for {nxt.due_date}")
     print()
 
-    # 5. Filtering by status
+    # 6. Filtering by status
     print_tasks(
         "Filter: Pending tasks today",
         scheduler.sort_by_time(

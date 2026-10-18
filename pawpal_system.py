@@ -149,6 +149,32 @@ class Scheduler:
         pet.add_task(nxt)
         return nxt
 
+    def find_next_available_slot(
+        self,
+        duration_minutes: int,
+        day: date | None = None,
+        start: str = "07:00",
+        end: str = "22:00",
+    ) -> str | None:
+        """Return the earliest HH:MM at or after start where a pending-task-free block fits by end, else None."""
+        if duration_minutes < 1:
+            raise ValueError(f"duration_minutes must be at least 1, got {duration_minutes}")
+        limit = time_to_minutes(end)
+        busy = sorted(
+            (time_to_minutes(t.time), time_to_minutes(t.time) + t.duration_minutes)
+            for t in self.get_todays_tasks(day)
+            if not t.completed
+        )
+        candidate = time_to_minutes(start)
+        for busy_start, busy_end in busy:
+            if busy_start >= candidate + duration_minutes:
+                break
+            if busy_end > candidate:
+                candidate = busy_end
+        if candidate + duration_minutes > limit:
+            return None
+        return f"{candidate // 60:02d}:{candidate % 60:02d}"
+
     def detect_conflicts(self, tasks: list[Task]) -> list[str]:
         """Return warning messages for pending same-day tasks whose time ranges overlap."""
         warnings: list[str] = []

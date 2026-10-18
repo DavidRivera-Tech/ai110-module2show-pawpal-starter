@@ -222,3 +222,59 @@ def test_sort_by_priority_then_time():
 
     assert result == [high_early, high_late, medium, low]
     assert tasks == [low, high_late, medium, high_early]
+
+
+def test_next_slot_empty_day_returns_start():
+    """With no tasks, the slot is the requested start time."""
+    _, _, _, scheduler = make_owner()
+
+    assert scheduler.find_next_available_slot(30, day=D) == "07:00"
+    assert scheduler.find_next_available_slot(30, day=D, start="09:15") == "09:15"
+
+
+def test_next_slot_finds_gap_between_tasks_on_different_pets():
+    """A gap between tasks belonging to different pets is found, allowing back-to-back placement."""
+    _, mochi, whiskers, scheduler = make_owner()
+    mochi.add_task(Task("Walk", "07:00", 60, due_date=D))
+    whiskers.add_task(Task("Play", "09:00", 30, due_date=D))
+
+    assert scheduler.find_next_available_slot(60, day=D) == "08:00"
+    assert scheduler.find_next_available_slot(61, day=D) == "09:30"
+
+
+def test_next_slot_skips_overlapping_tasks_to_first_real_gap():
+    """Overlapping tasks form one busy block; the slot starts after the latest end."""
+    _, mochi, whiskers, scheduler = make_owner()
+    mochi.add_task(Task("Walk", "07:00", 60, due_date=D))
+    whiskers.add_task(Task("Groom", "07:30", 90, due_date=D))
+    mochi.add_task(Task("Pill", "09:15", 15, due_date=D))
+
+    assert scheduler.find_next_available_slot(15, day=D) == "09:00"
+    assert scheduler.find_next_available_slot(30, day=D) == "09:30"
+
+
+def test_next_slot_ignores_completed_tasks():
+    """Completed tasks do not block time."""
+    _, mochi, _, scheduler = make_owner()
+    task = Task("Walk", "07:00", 60, due_date=D)
+    mochi.add_task(task)
+    task.mark_complete()
+
+    assert scheduler.find_next_available_slot(30, day=D) == "07:00"
+
+
+def test_next_slot_none_when_day_is_full():
+    """Returns None when no block fits before the end time."""
+    _, mochi, _, scheduler = make_owner()
+    mochi.add_task(Task("All day", "07:00", 900, due_date=D))
+
+    assert scheduler.find_next_available_slot(1, day=D) is None
+    assert scheduler.find_next_available_slot(60, day=D, start="21:30") is None
+
+
+def test_next_slot_zero_duration_raises():
+    """A duration below 1 minute is rejected."""
+    _, _, _, scheduler = make_owner()
+
+    with pytest.raises(ValueError):
+        scheduler.find_next_available_slot(0, day=D)

@@ -55,14 +55,36 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-Running `python main.py` creates an owner with two pets and four tasks, then prints today's schedule through the Scheduler:
+Running `python main.py` creates an owner with two pets and five tasks added out of order, then demonstrates sorting, filtering, conflict detection, and recurring tasks:
 
 ```
-Today's Schedule - 2026-10-17
-=============================
+Today's Schedule (sorted by time)
+=================================
+07:30 | Mochi | Morning walk         |  30 min | high   | daily  | [ ] pending
+07:45 | Luna  | Breakfast            |  10 min | high   | daily  | [ ] pending
+12:00 | Mochi | Give heartworm pill  |   5 min | high   | once   | [ ] pending
+12:00 | Luna  | Brush coat           |   5 min | medium | once   | [ ] pending
+18:00 | Luna  | Play session         |  20 min | low    | weekly | [ ] pending
+
+Filter: Mochi's tasks
+=====================
 07:30 | Mochi | Morning walk         |  30 min | high   | daily  | [ ] pending
 12:00 | Mochi | Give heartworm pill  |   5 min | high   | once   | [ ] pending
-08:00 | Luna  | Breakfast            |  10 min | high   | daily  | [ ] pending
+
+Conflict Check
+==============
+WARNING: Mochi's 'Morning walk' (07:30, 30 min) overlaps Luna's 'Breakfast' (07:45, 10 min)
+WARNING: Mochi's 'Give heartworm pill' (12:00, 5 min) overlaps Luna's 'Brush coat' (12:00, 5 min)
+
+Recurring Task Demo
+===================
+Completed 'Morning walk' -> next occurrence scheduled for 2026-10-19
+
+Filter: Pending tasks today
+===========================
+07:45 | Luna  | Breakfast            |  10 min | high   | daily  | [ ] pending
+12:00 | Mochi | Give heartworm pill  |   5 min | high   | once   | [ ] pending
+12:00 | Luna  | Brush coat           |   5 min | medium | once   | [ ] pending
 18:00 | Luna  | Play session         |  20 min | low    | weekly | [ ] pending
 ```
 
@@ -84,14 +106,15 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| ------- | --------- | ----- |
+| Task sorting | `Scheduler.sort_by_time()` | Sorts by converting "HH:MM" to minutes, so "7:30" can never sort after "10:00". Returns a new list. |
+| Filtering | `Scheduler.filter_by_pet()`, `Scheduler.filter_by_status()` | Filter by pet name (case-insensitive) or by completed/pending. Both return lists, so they can be chained. |
+| Conflict handling | `Scheduler.detect_conflicts()` | Flags pending, same-day tasks whose time ranges overlap (start + duration), across **all** pets. Back-to-back tasks are not conflicts. Returns warning strings, never crashes. |
+| Recurring tasks | `Task.next_occurrence()`, `Scheduler.mark_task_complete()` | Completing a daily task creates the next one at due date + 1 day (weekly: + 7 days) using `timedelta`, and adds it to the same pet. Completing a task twice does not create duplicates. |
+| Time validation | `time_to_minutes()`, `Task.__post_init__()` | Normalizes "7:30" to "07:30" and rejects invalid times like "25:99" when a task is created. |
+
+All Scheduler features read tasks through `Owner.get_all_tasks()`, so they work across every pet, not just one.
 
 ## 📸 Demo Walkthrough
 

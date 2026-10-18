@@ -27,8 +27,12 @@
 
 - **If yes, describe at least one change and why you made it.**
 After generating the skeleton, I asked Claude to review it against the UML. I accepted 7 of its 9 points and rejected 2:
-  - **Accepted:** Made `get_pet`, `next_occurrence`, and `mark_task_complete` return `X | None`, because a missing pet or a one-time task has nothing to return, and the old hints promised a value that might not exist. Changed Task to `@dataclass(eq=False)` so `remove_task` removes the exact task object, not just the first one with identical fields. Added an optional `today` parameter to `get_todays_tasks()` so tests can use a fixed date. Decided `Pet.add_task()` will set `task.pet_name` automatically so it can't drift, and that times will be sorted as minutes rather than strings, since "9:00" sorts after "10:00" as text.
-  - **Rejected:** Storing a Pet object reference on each Task. It creates a circular reference that complicates printing, comparison, and JSON saving, and the pet_name string is enough. Also rejected Enums for priority and frequency: the UI dropdowns already limit the values, and Enums would add complexity without much benefit at this size.
+
+- **Accepted:** Made `get_pet`, `next_occurrence`, and `mark_task_complete` return `X | None`, because a missing pet or a one-time task has nothing to return, and the old hints promised a value that might not exist. Changed Task to `@dataclass(eq=False)` so `remove_task` removes the exact task object, not just the first one with identical fields. Added an optional `today` parameter to `get_todays_tasks()` so tests can use a fixed date. Decided `Pet.add_task()` will set `task.pet_name` automatically so it can't drift, and that times will be sorted as minutes rather than strings, since "9:00" sorts after "10:00" as text.
+
+- **Rejected:** Storing a Pet object reference on each Task. It creates a circular reference that complicates printing, comparison, and JSON saving, and the pet_name string is enough. Also rejected Enums for priority and frequency: the UI dropdowns already limit the values, and Enums would add complexity without much benefit at this size.
+
+- **Phase 4 changes:** I added a `time_to_minutes()` helper and `Task.__post_init__` validation (so "7:30" becomes "07:30" and "25:99" is rejected), and I changed conflict detection from "same start time" to "overlapping time ranges" after Claude pointed out that a 30-minute walk at 07:30 really does clash with a 07:45 feeding. I also made `Owner.get_pet()` case-insensitive to match `filter_by_pet()`. Claude had applied case-insensitive matching to only one of the two methods.
 
 ---
 
@@ -36,13 +40,19 @@ After generating the skeleton, I asked Claude to review it against the UML. I ac
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+- **What constraints does your scheduler consider (for example: time, priority, preferences)?**
+  Time of day (HH:MM), task duration, due date, completion status, frequency (once/daily/weekly), and which pet a task belongs to. Priority is stored on every task and shown in the schedule.
+
+- **How did you decide which constraints mattered most?**
+  Time and duration matter most, because a pet owner can only be in one place at a time. That's why conflict detection checks whether time ranges overlap (start + duration), not just whether start times match. Due date comes next, so recurring tasks land on the right day and conflicts are only compared within the same day.
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+- **Describe one tradeoff your scheduler makes.**
+  The scheduler warns about overlapping tasks but never moves them automatically, and it doesn't handle tasks that run past midnight. Claude suggested auto-rescheduling lower-priority tasks into the next free slot, but I rejected that.
+
+- **Why is that tradeoff reasonable for this scenario?**
+  Silently moving an owner's tasks would be surprising. They may have a reason for the time they chose (like a vet appointment). A warning keeps the owner in control. Pet care tasks are daytime routines, so midnight-crossing tasks aren't a realistic case. I also kept a simple "check every pair" conflict algorithm instead of Claude's faster sort-and-break version, because a household has a few dozen tasks at most, and the simpler version is easier to read and verify.
 
 ---
 

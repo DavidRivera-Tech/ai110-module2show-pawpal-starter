@@ -1,7 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import date
+from dataclasses import dataclass, field, replace
+from datetime import date, timedelta
+from itertools import combinations
+
+
+def time_to_minutes(hhmm: str) -> int:
+    """Parse an "HH:MM" string and return minutes since midnight, raising ValueError if invalid."""
+    parts = str(hhmm).strip().split(":")
+    if len(parts) != 2 or not all(p.isascii() and p.isdigit() for p in parts):
+        raise ValueError(f"Invalid time {hhmm!r}; expected HH:MM")
+    hours, minutes = int(parts[0]), int(parts[1])
+    if hours > 23 or minutes > 59:
+        raise ValueError(f"Invalid time {hhmm!r}; hour must be 0-23 and minute 0-59")
+    return hours * 60 + minutes
 
 
 @dataclass(eq=False)
@@ -17,14 +29,26 @@ class Task:
     completed: bool = False
     pet_name: str = ""
 
+    def __post_init__(self) -> None:
+        """Validate and normalize time to HH:MM and lowercase priority and frequency."""
+        minutes = time_to_minutes(self.time)
+        self.time = f"{minutes // 60:02d}:{minutes % 60:02d}"
+        self.priority = self.priority.strip().lower()
+        self.frequency = self.frequency.strip().lower()
+
     def mark_complete(self) -> None:
         """Mark this task as completed."""
         self.completed = True
 
     def next_occurrence(self) -> Task | None:
         """Return a new task for the next daily/weekly occurrence, or None if the task is one-time."""
-        # Implemented in Phase 4
-        pass
+        if self.frequency == "daily":
+            days = 1
+        elif self.frequency == "weekly":
+            days = 7
+        else:
+            return None
+        return replace(self, due_date=self.due_date + timedelta(days=days), completed=False)
 
 
 @dataclass
@@ -66,7 +90,7 @@ class Owner:
     def get_pet(self, name: str) -> Pet | None:
         """Return the pet with the given name, or None if there is no match."""
         for pet in self.pets:
-            if pet.name == name:
+            if pet.name.strip().casefold() == name.strip().casefold():
                 return pet
         return None
 
@@ -89,27 +113,50 @@ class Scheduler:
         return [t for t in self.owner.get_all_tasks() if t.due_date == today]
 
     def sort_by_time(self, tasks: list[Task]) -> list[Task]:
-        """Return tasks sorted by time (HH:MM), earliest first."""
-        # Implemented in Phase 4
-        pass
+        """Return a new list of tasks sorted by time (HH:MM), earliest first."""
+        return sorted(tasks, key=lambda t: time_to_minutes(t.time))
 
     def filter_by_pet(self, tasks: list[Task], pet_name: str) -> list[Task]:
-        """Return only the tasks that belong to the pet with the given name."""
-        # Implemented in Phase 4
-        pass
+        """Return only the tasks belonging to the named pet, ignoring case and surrounding spaces."""
+        target = pet_name.strip().casefold()
+        return [t for t in tasks if t.pet_name.strip().casefold() == target]
 
     def filter_by_status(self, tasks: list[Task], completed: bool) -> list[Task]:
         """Return only the tasks whose completed status matches the given value."""
-        # Implemented in Phase 4
-        pass
+        return [t for t in tasks if t.completed == completed]
 
     def mark_task_complete(self, task: Task) -> Task | None:
-        """Mark a task complete and, in Phase 4, return its next recurrence if any."""
-        # Recurrence handled in Phase 4
+        """Complete a task and return its newly scheduled next occurrence, or None if there is none."""
+        if task.completed:
+            return None
         task.mark_complete()
-        return None
+        nxt = task.next_occurrence()
+        if nxt is None:
+            return None
+        pet = self.owner.get_pet(task.pet_name)
+        if pet is None:
+            return None
+        pet.add_task(nxt)
+        return nxt
 
     def detect_conflicts(self, tasks: list[Task]) -> list[str]:
-        """Return warning messages for tasks whose time slots overlap."""
-        # Implemented in Phase 4
-        pass
+        """Return warning messages for pending same-day tasks whose time ranges overlap."""
+        warnings: list[str] = []
+        ranges: list[tuple[Task, int, int]] = []
+        for t in self.sort_by_time(tasks):
+            if t.completed:
+                continue
+            start = time_to_minutes(t.time)
+            ranges.append((t, start, start + t.duration_minutes))
+
+        for (a, start_a, end_a), (b, start_b, end_b) in combinations(ranges, 2):
+            if a.due_date != b.due_date:
+                continue
+            if start_a < end_b and start_b < end_a:
+                warnings.append(
+                    f"WARNING: {a.pet_name}'s '{a.description}' "
+                    f"({a.time}, {a.duration_minutes} min) overlaps "
+                    f"{b.pet_name}'s '{b.description}' "
+                    f"({b.time}, {b.duration_minutes} min)"
+                )
+        return warnings

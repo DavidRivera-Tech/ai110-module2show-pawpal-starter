@@ -1,15 +1,56 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
-    %% Keep this file updated so it matches your final implementation.
+    class Task {
+        +str description
+        +str time
+        +int duration_minutes
+        +str priority
+        +str frequency
+        +date due_date
+        +bool completed
+        +str pet_name
+        +mark_complete() None
+        +next_occurrence() Optional~Task~
+        +to_dict() dict
+        +from_dict(data)$ Task
+    }
+    note for Task "__post_init__ validates on creation:\n- time must be HH:MM (normalized to zero-padded)\n- duration_minutes >= 1\n- frequency must be once, daily, or weekly\n- priority and frequency are stripped and lowercased"
 
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Pet {
+        +str name
+        +str species
+        +list~Task~ tasks
+        +add_task(task) None
+        +remove_task(task) None
+        +get_tasks() list~Task~
+        +to_dict() dict
+        +from_dict(data)$ Pet
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class Owner {
+        +str name
+        +list~Pet~ pets
+        +add_pet(pet) None
+        +get_pet(name) Optional~Pet~
+        +get_all_tasks() list~Task~
+        +to_dict() dict
+        +from_dict(data)$ Owner
+        +save_to_json(path) None
+        +load_from_json(path)$ Optional~Owner~
     }
 
-    ClassName --> AnotherClass : relationship
+    class Scheduler {
+        +Owner owner
+        +get_todays_tasks(today) list~Task~
+        +sort_by_time(tasks) list~Task~
+        +sort_by_priority(tasks) list~Task~
+        +filter_by_pet(tasks, pet_name) list~Task~
+        +filter_by_status(tasks, completed) list~Task~
+        +mark_task_complete(task) Optional~Task~
+        +find_next_available_slot(duration_minutes, day, start, end) Optional~str~
+        +detect_conflicts(tasks) list~str~
+    }
+
+    Owner "1" o-- "*" Pet : has
+    Pet "1" *-- "*" Task : has
+    Scheduler "1" --> "1" Owner : uses
+    Scheduler ..> Task : sorts/filters/creates

@@ -171,6 +171,25 @@ I used custom dictionary conversion instead of a library like marshmallow. It's 
 | `tests/test_pawpal.py` | Added a full save/load round-trip test and a missing-file test |
 | `.gitignore` | Added `data.json` so personal data isn't committed |
 
+## 🎨 CLI Output Formatting
+
+`main.py` prints the demo as formatted tables instead of plain text:
+
+| Feature | How it's done | Function / library |
+| ------- | ------------- | ------------------ |
+| **Bordered tables** | Each task list prints as a rounded-border table with headers | `tabulate` (`tablefmt="rounded_outline"`) in `print_tasks()` |
+| **Emoji task types** | 🐕 walk/fetch, 🍖 food, 💊 meds, 🧼 grooming, 🎾 play, 🐾 other | `task_emoji()` (keyword match on the description) |
+| **Emoji status** | ✅ done / ⏳ pending | `print_tasks()` |
+| **Color-coded priority** | high = red, medium = yellow, low = green; conflict warnings in yellow; bold section titles | ANSI escape codes via `color()` and `PRIORITY_COLORS` |
+| **Correct alignment with emojis** | Emojis are double-width; without help, table borders go crooked | `wcwidth` (used automatically by `tabulate`) |
+
+**Safety choices:**
+- Colors only turn on when printing to a real terminal (`sys.stdout.isatty()`) and respect the `NO_COLOR` environment variable, so redirected output never fills with escape codes like `\x1b[31m`.
+- `sys.stdout.reconfigure(encoding="utf-8")` prevents a `UnicodeEncodeError` crash when output is piped or redirected on Windows.
+- I avoided emojis with "variation selectors" (like 🍽️ and ✂️), which render inconsistently on Windows and break table alignment.
+
+`tabulate` and `wcwidth` are listed in `requirements.txt`.
+
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:

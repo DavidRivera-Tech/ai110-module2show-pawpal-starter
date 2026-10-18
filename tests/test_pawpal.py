@@ -304,3 +304,11 @@ def test_save_and_load_round_trip(tmp_path):
 def test_load_missing_file_returns_none(tmp_path):
     """Loading from a path that does not exist returns None."""
     assert Owner.load_from_json(str(tmp_path / "nope.json")) is None
+
+
+def test_invalid_frequency_rejected():
+    """An unknown frequency raises ValueError, while a padded, mixed-case one is normalized."""
+    with pytest.raises(ValueError):
+        Task("x", "10:00", frequency="weekley", due_date=D)
+
+    assert Task("x", "10:00", frequency=" Weekly ", due_date=D).frequency == "weekly"

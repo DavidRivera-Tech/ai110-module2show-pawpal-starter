@@ -41,6 +41,10 @@ class Task:
         self.time = f"{minutes // 60:02d}:{minutes % 60:02d}"
         self.priority = self.priority.strip().lower()
         self.frequency = self.frequency.strip().lower()
+        if self.frequency not in ("once", "daily", "weekly"):
+            raise ValueError(
+                f"frequency must be 'once', 'daily', or 'weekly', got {self.frequency!r}"
+            )
 
     def mark_complete(self) -> None:
         """Mark this task as completed."""
